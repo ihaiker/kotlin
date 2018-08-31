@@ -1,0 +1,1 @@
+org.springframework.cloud.bootstrap.BootstrapConfiguration=la.renzhen.basis.spring.boot.CustomerPropertySourceLocator

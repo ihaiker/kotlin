@@ -1,0 +1,298 @@
+ext {
+    nexusPrivatePath = NexusPrivateService()
+    ossUsername = rootProject.getProperties().get("ossrhUsername")
+    ossPassword = rootProject.getProperties().get("ossrhPassword")
+
+    kotlinVersion = '1.2.61'
+    springVersion = "4.3.13.RELEASE"
+    springBootVersion = '2.0.4.RELEASE'
+    springCloudVersion = 'Edgware.RELEASE'
+
+    runEnv = project.getProperties().getOrDefault('env', 'dev').toString()
+    if (runEnv.equals('product') || runEnv.equals('online')) {
+        version version.replaceAll("-SNAPSHOT", "-RELEASE")
+    }
+}
+
+/*
+* 获取私服地址。
+* 获取策略：
+*   1、直接指定私服地址：-Dnexus.private.service=http://maven.aliyun.com/nexus/
+*   2、读取配置变量：nexus.private.service=http://maven.aliyun.com/nexus/
+*   3、按照项目名称，指定不同私服。获取系统变量：${rootProject.name.toUpperCase}_NEXUS_PATH=http://maven.aliyun.com/nexus/
+*   4、默认私服地址，NEXUS_PRIVATE_PATH=http://maven.aliyun.com/nexus/
+* */
+
+def NexusPrivateService() {
+    String path = System.getProperty("nexus.private.service")
+    if (path == null || "".equals(path)) {
+        path = rootProject.getProperties().get("nexus.private.service")
+    }
+    if (path == null || "".equals(path)) {
+        path = System.getenv("${rootProject.group}_${rootProject.name}_NEXUS_PATH".replaceAll("\\.", "_").toUpperCase());
+    }
+    if (path == null || "".equals(path)) {
+        path = System.getenv("${rootProject.name}_NEXUS_PATH".replaceAll("\\.", "_").toUpperCase());
+    }
+    if (path == null || "".equals(path)) {
+        path = System.getenv("NEXUS_PRIVATE_PATH");
+    }
+    return path;
+}
+
+def NexusRepositoriesDefined() {
+    String nrs = System.getProperty("nexus.repositories")
+    if (nrs == null) {
+        nrs = rootProject.getProperties().get("nexus.repositories", "")
+    }
+    return nrs.split(",")
+}
+
+def RepositorySecurity(String repositoriesPath, String type) {
+    String key = repositoriesPath.toString().replaceAll("http://", "").replaceAll("https://", "") + "." + type;
+    String value = rootProject.getProperties().get(key);
+    if (value == null || "".equals(value)) {
+        value = System.getenv(key.replaceAll("\\.", "_").toUpperCase());
+    }
+    if (value == null || "".equals(value)) {
+        value = rootProject.getProperties().get(type);
+    }
+    return value;
+}
+
+subprojects {
+    buildscript {
+        repositories {
+            if (nexusPrivatePath != null && !"".equals(nexusPrivatePath)) {
+                maven { url "${nexusPrivatePath}/content/groups/public/" }
+            }
+            maven { url "http://maven.aliyun.com/nexus/content/groups/public" }
+            maven { url "https://repo.spring.io/milestone" }
+            maven { url "https://repo.spring.io/snapshot" }
+            jcenter()
+        }
+        dependencies {
+            classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
+            classpath("org.jetbrains.kotlin:kotlin-allopen:${kotlinVersion}")
+            classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        }
+    }
+
+    repositories {
+        if (nexusPrivatePath != null && !"".equals(nexusPrivatePath)) {
+            maven { url "${nexusPrivatePath}/content/groups/public/" }
+        }
+
+        for (item in NexusRepositoriesDefined()) {
+            maven { url "${item}" }
+        }
+
+        maven { url "http://maven.aliyun.com/nexus/content/groups/public" }
+        mavenCentral()
+    }
+
+    configurations.all {
+        resolutionStrategy {
+            eachDependency { details ->
+                if (runEnv.equals("product") && details.requested.group.startsWith(rootProject.getProperties().get("group.package.prefix"))) {
+                    details.useVersion(details.requested.version.replaceAll("-SNAPSHOT", "-RELEASE"))
+                }
+            }
+        }
+    }
+
+    plugins.withType(JavaPlugin) {
+        plugins.apply("idea")
+
+        group "${rootProject.group}"
+        version "${rootProject.version}"
+        archivesBaseName = "${rootProject.name}-${project.name}"
+
+        ext {
+            sourceCompatibility = JavaVersion.VERSION_1_8
+            targetCompatibility = JavaVersion.VERSION_1_8
+            [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
+        }
+
+        idea {
+            module {
+                downloadSources = true
+                outputDir = file('build/classes/java/main')
+                testOutputDir = file('build/classes/java/test')
+            }
+        }
+
+        jar {
+            manifest {
+                attributes "X-Application-Group": "${rootProject.group}"
+                attributes "X-Application-Name": "${rootProject.name}-${project.name}"
+                attributes "X-Application-Version": "${rootProject.version}"
+                attributes "X-Application-BuildTime": new java.text.SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date())
+            }
+            enabled = true
+        }
+        configurations {
+            optional
+            compile.extendsFrom optional
+        }
+
+        dependencies {
+            testCompile "junit:junit:4.12"
+            compile 'com.google.guava:guava:25.1-jre'
+            compile 'org.slf4j:slf4j-api:1.7.25'
+            compileOnly "org.projectlombok:lombok:1.16.20"
+            testCompileOnly "org.projectlombok:lombok:1.16.20"
+        }
+
+        task sourceJar(type: Jar) {
+            classifier = 'sources'
+            from sourceSets.main.allSource
+        }
+
+        task javadocJar(type: Jar, dependsOn: javadoc) {
+            classifier = 'javadoc'
+            from "${buildDir}/docs/javadoc"
+        }
+
+        if ("true".equals(rootProject.getProperties().get("is.oss.sonatype"))) {
+            artifacts {
+                archives sourceJar
+                archives javadocJar
+            }
+        } else {
+            artifacts {
+                archives sourceJar
+            }
+        }
+    }
+
+    plugins.withId("kotlin") {
+        project.plugins.apply("kotlin-spring")
+
+        compileKotlin {
+            kotlinOptions {
+                freeCompilerArgs = ["-Xjsr305=strict"]
+                jvmTarget = "1.8"
+            }
+        }
+        compileTestKotlin {
+            kotlinOptions {
+                freeCompilerArgs = ["-Xjsr305=strict"]
+                jvmTarget = "1.8"
+            }
+        }
+        dependencies {
+            compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+            compile "org.jetbrains.kotlin:kotlin-reflect"
+        }
+    }
+
+    plugins.withId('io.spring.dependency-management', {
+        dependencyManagement {
+            imports {
+                mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+                mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
+            }
+        }
+    })
+    plugins.withType(SigningPlugin) {
+        signing {
+            sign configurations.archives
+        }
+        uploadArchives {
+            repositories {
+                mavenDeployer {
+                    beforeDeployment {
+                        MavenDeployment deployment -> signing.signPom(deployment);
+                    }
+                }
+            }
+        }
+    }
+
+    plugins.withId('org.springframework.boot', {
+        bootRepackage {
+            classifier = 'boot'
+        }
+
+        task copyRuntime(type: Copy, dependsOn: build) {
+            doFirst {
+                file("${project.buildDir}/service").withOutputStream { out ->
+                    new URL("https://raw.githubusercontent.com/ihaiker/evildoer/master/service.sh").withInputStream { from -> out << from; }
+                }
+            }
+            from(file("${project.buildDir}/service")) {
+                into("bin")
+                fileMode(0755)
+                filter { line ->
+                    line.replace("[MAIN_CLASS]", mainClassName)
+                }
+            }
+            from(file("/data/config/${project.name}/bin")) {
+                into("bin")
+                fileMode(0755)
+            }
+            from(file("/data/config/${project.name}/conf")) {
+                into("conf")
+            }
+            into("lib") {
+                from(configurations.runtime)
+                from("${project.buildDir}/libs/${jar.baseName}-${project.version}.jar")
+            }
+            destinationDir = file("${project.buildDir}/assembly")
+        }
+
+        task assembly(type: Zip, dependsOn: [copyRuntime]) {
+            archiveName = "${jar.baseName}.zip"
+            from fileTree("${buildDir}/assembly")
+        }
+    })
+
+    plugins.withType(MavenPlugin) {
+        uploadArchives {
+            configuration = configurations.archives
+            repositories {
+                mavenDeployer {
+                    if ("true".equals(rootProject.getProperties().get("is.oss.sonatype"))) {
+                        snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                            authentication(userName: RepositorySecurity("", "ossrhUsername"), password: RepositorySecurity("", "ossrhPassword"))
+                        }
+                        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                            authentication(userName: RepositorySecurity("", "ossrhUsername"), password: RepositorySecurity("", "ossrhPassword"))
+                        }
+                    } else {
+                        snapshotRepository(url: "${nexusPrivatePath}/content/repositories/snapshots") {
+                            authentication(
+                                    userName: RepositorySecurity(nexusPrivatePath, "ossrhUsername"),
+                                    password: RepositorySecurity(nexusPrivatePath, "ossrhPassword")
+                            )
+                        }
+                        repository(url: "${nexusPrivatePath}/content/repositories/releases") {
+                            authentication(
+                                    userName: RepositorySecurity(nexusPrivatePath, "ossrhUsername"),
+                                    password: RepositorySecurity(nexusPrivatePath, "ossrhPassword")
+                            )
+                        }
+                    }
+                    pom.project {
+                        artifactId "${rootProject.name}-${project.name}"
+                        groupId "${rootProject.group}"
+                        version "${rootProject.version}"
+                        packaging "jar"
+
+                        name "${project.name}"
+                        description "${project.name}"
+
+                        licenses {
+                            license {
+                                name 'The Apache License, Version 2.0'
+                                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                                distribution 'repo'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

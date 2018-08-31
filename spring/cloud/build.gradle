@@ -1,0 +1,9 @@
+apply plugin: "java"
+apply plugin: "maven"
+apply plugin: "signing"
+apply plugin: "io.spring.dependency-management"
+
+dependencies {
+    compile project(":utils")
+    compile "org.springframework.cloud:spring-cloud-starter"
+}

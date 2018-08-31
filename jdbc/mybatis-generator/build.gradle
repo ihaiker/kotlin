@@ -1,0 +1,19 @@
+apply plugin: "java"
+apply plugin: "maven"
+apply plugin: "kotlin"
+apply plugin: "signing"
+
+dependencies {
+    compile project(":utils")
+
+    compile "org.mybatis:mybatis:3.4.4"
+    compile "org.mybatis:mybatis-spring:1.3.1"
+    compile "org.mybatis.generator:mybatis-generator-core:1.3.6"
+
+    compile "com.github.pagehelper:pagehelper:5.0.1"
+
+    compile "mysql:mysql-connector-java:5.1.46"
+    compile "com.alibaba:druid:1.1.4"
+
+    compile "org.yaml:snakeyaml:1.17"
+}

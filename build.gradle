@@ -1,0 +1,32 @@
+group 'la.renzhen.kotlin'
+version '1.0.0-SNAPSHOT'
+
+apply from: "gradle/module.gradle"
+
+subprojects {
+    plugins.withType(MavenPlugin) {
+        uploadArchives {
+            configuration = configurations.archives
+            repositories {
+                mavenDeployer {
+                    pom.project {
+                        url "https://github.com/ihaiker/kotlin.git"
+                        inceptionYear "20180831"
+                        scm {
+                            connection 'scm:git:https://github.com/ihaiker/kotlin.git'
+                            developerConnection 'scm:git:https://github.com/ihaiker/kotlin.git'
+                            url 'https://github.com/ihaiker/kotlin.git'
+                        }
+                        developers {
+                            developer {
+                                id 'haiker'
+                                name 'haiker'
+                                email 'wo@reznzhen.la'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

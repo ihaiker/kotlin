@@ -1,0 +1,6 @@
+rootProject.name = 'evildoer'
+
+include "utils"
+include "aircraft"
+include "spring/cloud"
+include "jdbc/mybatis-generator"
