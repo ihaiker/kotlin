@@ -2,6 +2,8 @@ package la.renzhen.kotlin.utils
 
 import com.google.common.base.Ascii
 import com.google.common.base.CaseFormat
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 fun String.firstCharToUpper(): String {
@@ -73,3 +75,7 @@ fun String?.trimToEmpty(): String {
     return this.trimToNull() ?: ""
 }
 
+fun String.date(pattern: String = "yyyy-MM-dd HH:mm:ss"): Date {
+    val sdf = SimpleDateFormat(pattern)
+    return sdf.parse(this)
+}

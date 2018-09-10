@@ -59,3 +59,11 @@ fun ByteArray.base64(): String {
     return Base64.encode(this)
 }
 
+fun String.decodeBase64(): ByteArray {
+    return Base64.decode2bytes(this)
+}
+
+fun String.base64(): String {
+    return Base64.encode(this)
+}
+

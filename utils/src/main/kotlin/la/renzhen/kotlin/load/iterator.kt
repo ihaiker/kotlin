@@ -41,7 +41,7 @@ constructor(
     /**
      * 加载数据之后操作
      */
-    open protected fun afterLoaded(data: MutableList<Out>) {
+    protected open fun afterLoaded(data: MutableList<Out>) {
 
     }
 
@@ -49,7 +49,7 @@ constructor(
      * 加载数据之前
      * @param index 当前索引
      */
-    open protected fun preLoad(index: Index?) {
+    protected open fun preLoad(index: Index?) {
 
     }
 

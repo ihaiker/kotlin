@@ -3,7 +3,7 @@ ext {
     ossUsername = rootProject.getProperties().get("ossrhUsername")
     ossPassword = rootProject.getProperties().get("ossrhPassword")
 
-    kotlinVersion = '1.2.61'
+    kotlinVersion = '1.2.51'
     springVersion = "4.3.13.RELEASE"
     springBootVersion = '2.0.4.RELEASE'
     springCloudVersion = 'Edgware.RELEASE'
@@ -182,8 +182,8 @@ subprojects {
             }
         }
         dependencies {
-            compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-            compile "org.jetbrains.kotlin:kotlin-reflect"
+            compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}"
+            compile "org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}"
         }
     }
 

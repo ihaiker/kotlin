@@ -41,4 +41,11 @@ class DateTests {
     fun show(date: Date) {
         println(date.format())
     }
+
+    @Test
+    fun testMonthDay() {
+        println("20180426".date("yyyyMMdd").monthLastDay().petty())
+
+        println(Date().isWeekEnd(Calendar.MONDAY))
+    }
 }

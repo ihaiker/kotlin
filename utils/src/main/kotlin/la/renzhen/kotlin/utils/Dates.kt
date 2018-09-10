@@ -1,6 +1,7 @@
 package la.renzhen.kotlin.utils
 
 import java.text.SimpleDateFormat
+import java.time.Duration
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
@@ -10,12 +11,81 @@ internal val FORMATE_TIME = "HH:mm:ss"
 internal val DEFAULT_FORMATE = "yyyy-MM-dd HH:mm:ss"
 
 
+fun Date.calendar(): Calendar {
+    val c = Calendar.getInstance();
+    c.time = this
+    return c
+}
+
+fun Date.add(calendarField: Int, amount: Int = 1): Date {
+    val c = Calendar.getInstance()
+    c.setTime(this)
+    c.add(calendarField, amount)
+    return c.getTime()
+}
+
+
+fun Date.addDays(amount: Int = 1): Date {
+    return this.add(Calendar.DAY_OF_MONTH, amount)
+}
+
+fun Date.addWeeks(amount: Int = 1): Date {
+    return this.add(Calendar.WEEK_OF_YEAR, amount)
+}
+
+fun Date.addMonths(amount: Int = 1): Date {
+    return this.add(Calendar.MONTH, amount)
+}
+
+fun Date.addYears(amount: Int = 1): Date {
+    return this.add(Calendar.YEAR, amount);
+}
+
+fun Date.offset(duration: Duration): Date {
+    return Date(this.time + duration.toMillis())
+}
+
 fun Date.offset(offset: Int, field: TimeUnit = TimeUnit.DAYS): Date {
     return Date(this.time + field.toMillis(offset.toLong()))
 }
 
+fun Date.monthDays(): Int {
+    return this.monthLastDay().calendar().get(Calendar.DAY_OF_MONTH);
+}
+
+/**
+ * 获取昨天日期
+ * */
 fun Date.yesterday(): Date {
     return this.offset(offset = -1)
+}
+
+/**
+ * 判断是否是月一日
+ */
+fun Date.isMonthFirst(): Boolean {
+    return this.calendar().get(Calendar.DAY_OF_MONTH) == 0
+}
+
+/**
+ * 判断是否是月最后一天
+ */
+fun Date.isMonthEnd(): Boolean {
+    return this.addDays(1).isMonthFirst()
+}
+
+/**
+ * 是否是星期的第一天
+ */
+fun Date.isWeekFirst(firstDay: Int = Calendar.MONDAY): Boolean {
+    return this.week(firstDay) == firstDay
+}
+
+/**
+ * 是否是星期的第一天
+ */
+fun Date.isWeekEnd(firstDay: Int = Calendar.MONDAY): Boolean {
+    return this.addDays(1).isWeekFirst(firstDay)
 }
 
 /**
@@ -35,14 +105,14 @@ fun Date.weekDay(day: Int): Date {
  * @return 获取周一
  */
 fun Date.monday(): Date {
-    return weekDay(Calendar.MONDAY)
+    return this.weekDay(Calendar.MONDAY)
 }
 
 /**
  * @return 获取星期天
  */
 fun Date.sunday(): Date {
-    return weekDay(Calendar.SUNDAY)
+    return this.weekDay(Calendar.SUNDAY)
 }
 
 /**
@@ -81,10 +151,7 @@ fun Date.monthLastDay(): Date {
 }
 
 fun Date.weekName(): String {
-    val calendar = Calendar.getInstance()
-    calendar.time = this
-    val weekCode = calendar.get(Calendar.DAY_OF_WEEK)
-    when (weekCode) {
+    when (week()) {
         Calendar.MONDAY -> return "周一"
         Calendar.TUESDAY -> return "周二"
         Calendar.WEDNESDAY -> return "周三"
@@ -96,6 +163,13 @@ fun Date.weekName(): String {
     return ""
 }
 
+fun Date.week(firstDay: Int = Calendar.MONDAY): Int {
+    val calendar = Calendar.getInstance()
+    calendar.time = this
+    calendar.firstDayOfWeek = firstDay
+    val weekCode = calendar.get(Calendar.DAY_OF_WEEK)
+    return weekCode
+}
 
 /**
  * 优雅的方式显示日期

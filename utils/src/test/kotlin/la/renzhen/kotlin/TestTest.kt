@@ -63,7 +63,7 @@ class TestTest {
     fun testPageIt() {
         val it = PageIndex<Int>(7) {
             if (it!! < 10) {
-                mutableListOf(it!!)
+                mutableListOf(it)
             } else {
                 mutableListOf()
             }

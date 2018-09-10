@@ -2,6 +2,7 @@ package la.renzhen.kotlin
 
 import la.renzhen.kotlin.codes.Base64
 import la.renzhen.kotlin.codes.MD5
+import la.renzhen.kotlin.codes.base64
 import la.renzhen.kotlin.crypt.AESCrypt
 import la.renzhen.kotlin.crypt.Crypt
 import la.renzhen.kotlin.crypt.Des3Crypt

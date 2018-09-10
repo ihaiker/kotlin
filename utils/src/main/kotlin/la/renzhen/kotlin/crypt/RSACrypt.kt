@@ -44,7 +44,7 @@ class RSACrypt constructor(val publicBytes: ByteArray, val privateBytes: ByteArr
      * @throws IOException e
      */
     @Throws(IOException::class)
-    constructor(publicInput: InputStream, privateInput: InputStream) : this(publicInput.readBytes(), publicInput.readBytes())
+    constructor(publicInput: InputStream, privateInput: InputStream) : this(publicInput.readBytes(), privateInput.readBytes())
 
     constructor() : this(RSA_PUBLIC_KEY, RSA_PRIVATE_KEY)
 
