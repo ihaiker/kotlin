@@ -215,14 +215,14 @@ subprojects {
     }
 
     plugins.withId('org.springframework.boot', {
-        bootRepackage {
+        bootJar {
             classifier = 'boot'
         }
 
         task copyRuntime(type: Copy, dependsOn: build) {
             doFirst {
                 file("${project.buildDir}/service").withOutputStream { out ->
-                    new URL("https://raw.githubusercontent.com/ihaiker/evildoer/master/service.sh").withInputStream { from -> out << from; }
+                    new URL("https://raw.githubusercontent.com/ihaiker/kotlin/master/gradle/service.sh").withInputStream { from -> out << from; }
                 }
             }
             from(file("${project.buildDir}/service")) {
