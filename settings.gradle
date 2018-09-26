@@ -7,4 +7,4 @@ include "spring/cloud"
 findProject(":spring/cloud")?.name = "spring-cloud"
 
 include "jdbc/mybatis-generator"
-findProject(":jdbc/mybatis-generator")?.name = "mybatis-generator"
+findProject(":jdbc/mybatis-generator")?.name = "jdbc-mybatis-generator"

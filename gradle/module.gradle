@@ -3,12 +3,13 @@ ext {
     ossUsername = rootProject.getProperties().get("ossrhUsername")
     ossPassword = rootProject.getProperties().get("ossrhPassword")
 
-    kotlinVersion = '1.2.51'
-    springVersion = "4.3.13.RELEASE"
-    springBootVersion = '2.0.4.RELEASE'
-    springCloudVersion = 'Edgware.RELEASE'
+    jdkVersion = rootProject.getProperties().getOrDefault("jdk.version", "1.8").toString()
+    kotlinVersion = rootProject.getProperties().getOrDefault("kotlin.version", "1.2.71").toString()
+    springVersion = rootProject.getProperties().getOrDefault("spring.version", "4.3.13.RELEASE").toString()
+    springBootVersion = rootProject.getProperties().getOrDefault("spring.boot.version", "2.0.4.RELEASE").toString()
+    springCloudVersion = rootProject.getProperties().getOrDefault("spring.cloud.version", "Finchley.RELEASE").toString()
 
-    runEnv = project.getProperties().getOrDefault('env', 'dev').toString()
+    runEnv = project.getProperties().getOrDefault("env", "dev").toString()
     if (runEnv.equals('product') || runEnv.equals('online')) {
         version version.replaceAll("-SNAPSHOT", "-RELEASE")
     }
@@ -63,10 +64,10 @@ def RepositorySecurity(String repositoriesPath, String type) {
 subprojects {
     buildscript {
         repositories {
+            maven { url "http://maven.aliyun.com/nexus/content/groups/public" }
             if (nexusPrivatePath != null && !"".equals(nexusPrivatePath)) {
                 maven { url "${nexusPrivatePath}/content/groups/public/" }
             }
-            maven { url "http://maven.aliyun.com/nexus/content/groups/public" }
             maven { url "https://repo.spring.io/milestone" }
             maven { url "https://repo.spring.io/snapshot" }
             jcenter()
@@ -79,6 +80,10 @@ subprojects {
     }
 
     repositories {
+        mavenLocal()
+
+        maven { url "http://maven.aliyun.com/nexus/content/groups/public" }
+
         if (nexusPrivatePath != null && !"".equals(nexusPrivatePath)) {
             maven { url "${nexusPrivatePath}/content/groups/public/" }
         }
@@ -87,7 +92,6 @@ subprojects {
             maven { url "${item}" }
         }
 
-        maven { url "http://maven.aliyun.com/nexus/content/groups/public" }
         mavenCentral()
     }
 
@@ -109,8 +113,8 @@ subprojects {
         archivesBaseName = "${rootProject.name}-${project.name}"
 
         ext {
-            sourceCompatibility = JavaVersion.VERSION_1_8
-            targetCompatibility = JavaVersion.VERSION_1_8
+            sourceCompatibility = jdkVersion
+            targetCompatibility = jdkVersion
             [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
         }
 
@@ -172,13 +176,13 @@ subprojects {
         compileKotlin {
             kotlinOptions {
                 freeCompilerArgs = ["-Xjsr305=strict"]
-                jvmTarget = "1.8"
+                jvmTarget = jdkVersion
             }
         }
         compileTestKotlin {
             kotlinOptions {
                 freeCompilerArgs = ["-Xjsr305=strict"]
-                jvmTarget = "1.8"
+                jvmTarget = jdkVersion
             }
         }
         dependencies {
@@ -240,6 +244,14 @@ subprojects {
                 from("${project.buildDir}/libs/${jar.baseName}-${project.version}.jar")
             }
             destinationDir = file("${project.buildDir}/assembly")
+        }
+
+        if (project.tasks.findByName('beforeCopyRuntime')) {
+            println "Found beforeCopyRuntime task"
+            def beforeCopyRuntime = project.tasks.findByName('beforeCopyRuntime')
+            project.tasks.findByName('copyRuntime').dependsOn beforeCopyRuntime
+        } else {
+            println "Not found beforeCopyRuntime task"
         }
 
         task assembly(type: Zip, dependsOn: [copyRuntime]) {

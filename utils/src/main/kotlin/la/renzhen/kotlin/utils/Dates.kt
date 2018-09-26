@@ -4,19 +4,33 @@ import java.text.SimpleDateFormat
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.stream.Collectors
 import kotlin.collections.ArrayList
 
 internal val FORMAT_DAY = "yyyy-MM-dd"
 internal val FORMATE_TIME = "HH:mm:ss"
 internal val DEFAULT_FORMATE = "yyyy-MM-dd HH:mm:ss"
 
+internal val FORMATS: MutableMap<String, SimpleDateFormat> = mutableListOf<String>(
+        FORMAT_DAY, "yyyy-MM", DEFAULT_FORMATE, "yyyy-MM-dd HH:mm",
+        "yyyyMMdd", "yyyyMM", "yyyyMMddHHmmss", "yyyyMMddHHmm",
+        "yyyy.MM.dd", "yyyy.MM", "yyyy.MM.dd HH:mm:ss", "yyyy.MM.dd HH:mm",
+        "yyyy/MM/dd", "yyyy/MM", "yyyy/MM/dd HH:mm:ss", "yyyy/MM/dd HH:mm",
+        "HH:mm", FORMATE_TIME
+).stream().collect(Collectors.toMap({ it }, { SimpleDateFormat(it) }))
 
+/**
+ * 将Data转为Calendar格式
+ */
 fun Date.calendar(): Calendar {
     val c = Calendar.getInstance();
     c.time = this
     return c
 }
 
+/**
+ * 添加时间
+ */
 fun Date.add(calendarField: Int, amount: Int = 1): Date {
     val c = Calendar.getInstance()
     c.setTime(this)
@@ -24,7 +38,9 @@ fun Date.add(calendarField: Int, amount: Int = 1): Date {
     return c.getTime()
 }
 
-
+/**
+ * 时间添加amount天
+ */
 fun Date.addDays(amount: Int = 1): Date {
     return this.add(Calendar.DAY_OF_MONTH, amount)
 }
@@ -120,7 +136,11 @@ fun Date.sunday(): Date {
  * @param pattern 格式化方式
  */
 fun Date.format(pattern: String = DEFAULT_FORMATE): String {
-    return SimpleDateFormat(pattern).format(this)
+    val sdf = FORMATS.get(pattern)
+    if (sdf == null) {
+        FORMATS.put(pattern, SimpleDateFormat(pattern))
+    }
+    return FORMATS.get(pattern)!!.format(this)
 }
 
 fun Date.day(): String {

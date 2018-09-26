@@ -47,5 +47,7 @@ class DateTests {
         println("20180426".date("yyyyMMdd").monthLastDay().petty())
 
         println(Date().isWeekEnd(Calendar.MONDAY))
+
+        println(Date().isWeekFirst())
     }
 }
